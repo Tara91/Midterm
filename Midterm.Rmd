@@ -1,0 +1,391 @@
+---
+title: "Midterm"
+output: html_notebook
+---
+Tarabeth Gerrity
+tg64@nyu.edu
+
+Midterm
+Dataset 1:  train.csv.gz
+This is hand-written digits (0-9) from many people.
+It contains 785 columns, first columns is digit and the 784 remaining columns
+  are pixels 0-783. These are essentially 28x28 squares, so you can map the 784
+  columns to entries in the squares. Each entry is 0-255, 0 is for black and 255
+  stands for white, numbers in between are shades of gray
+1) Read in the data and convert the pixel data into pictures using plot
+   show a few examples in your report along with the code
+   
+
+```{r}
+
+#import train data
+
+train <- read.csv("/Users/morgenstern/Desktop/BioStats/train.csv")
+
+# first column is the digit
+
+##create a 28x28 matrix for the rest of the columns
+
+train1<- train[1,]
+
+train1
+#create the matrix as numeric, default sets it to a character matrix instead
+matrix1 <- matrix(as.numeric(train[1,785:2]),nrow=28, ncol=28)
+heatmap(matrix1,Rowv = NA, Colv = NA, col = gray.colors(256, start = 1, end = 0))
+
+
+##Set i values to whichever rows of the train data you want to graph
+for (i in 1:10){
+  m <- matrix(as.numeric((train[i,785:2])),nrow=28, ncol=28, byrow = FALSE)
+  heatmap(t(m),Rowv = NA, Colv = NA, col = gray.colors(256, start = 1, end = 0))
+}
+
+
+
+```
+2)  Separate the data by digits, and calculate average value of each pixel,
+   a)  Plot the average values, does it still resemble the digit label ?
+   b) which digits fare the best under this operation ?
+   2,5 and 7
+
+```{r}
+library(dplyr)
+##create 10 different vars for each number
+
+dig0 <- train[which(train$label == 0), ]
+mat0 <-matrix(as.numeric(colMeans(dig0[,2:785])),nrow=28, ncol=28)
+heatmap(mat0,Rowv = NA, Colv = NA, col = gray.colors(256, start = 1, end = 0))
+
+dig1<- train[which(train$label == 1), ]
+mat1 <-matrix(as.numeric(colMeans(dig1[,2:785])),nrow=28, ncol=28)
+heatmap(mat1,Rowv = NA, Colv = NA, col = gray.colors(256, start = 1, end = 0))
+
+dig2<- train[which(train$label == 2), ]
+mat2 <-matrix(as.numeric(colMeans(dig2[,2:785])),nrow=28, ncol=28)
+heatmap(mat2,Rowv = NA, Colv = NA, col = gray.colors(256, start = 1, end = 0))
+
+dig3<- train[which(train$label == 3), ]
+mat3 <-matrix(as.numeric(colMeans(dig3[,2:785])),nrow=28, ncol=28)
+heatmap(mat3,Rowv = NA, Colv = NA, col = gray.colors(256, start = 1, end = 0))
+
+dig4<- train[which(train$label == 4), ]
+mat4 <-matrix(as.numeric(colMeans(dig4[,2:785])),nrow=28, ncol=28)
+heatmap(mat4,Rowv = NA, Colv = NA, col = gray.colors(256, start = 1, end = 0))
+
+dig5<- train[which(train$label == 5), ]
+mat5 <-matrix(as.numeric(colMeans(dig5[,2:785])),nrow=28, ncol=28)
+heatmap(mat5,Rowv = NA, Colv = NA, col = gray.colors(256, start = 1, end = 0))
+
+dig6<- train[which(train$label == 6), ]
+mat6 <-matrix(as.numeric(colMeans(dig6[,2:785])),nrow=28, ncol=28)
+heatmap(mat6,Rowv = NA, Colv = NA, col = gray.colors(256, start = 1, end = 0))
+
+dig7<- train[which(train$label == 7), ]
+mat7 <-matrix(as.numeric(colMeans(dig7[,2:785])),nrow=28, ncol=28)
+heatmap(mat7,Rowv = NA, Colv = NA, col = gray.colors(256, start = 1, end = 0))
+
+dig8<- train[which(train$label == 8), ]
+mat8 <-matrix(as.numeric(colMeans(dig8[,2:785])),nrow=28, ncol=28)
+heatmap(mat8,Rowv = NA, Colv = NA, col = gray.colors(256, start = 1, end = 0))
+
+dig9<- train[which(train$label == 9), ]
+mat9 <-matrix(as.numeric(colMeans(dig9[,2:785])),nrow=28, ncol=28)
+heatmap(mat9,Rowv = NA, Colv = NA, col = gray.colors(256, start = 1, end = 0))
+
+```
+   3) Find which columns have the most variance and which have the least.
+   a) Over the whole dataset and then separately, for each digit (0-9)
+   b) Can you connect the variance to the results in 2b ?
+   c) Does replacing the columns with the lowest variability by their average
+        value have an effect on the digits ?
+   d) How many columns have average values close to 255 or 0  and why ?
+
+   
+```{r}
+
+##Variance over whole data set
+
+v<- data.frame(ncol=2, nrow = 0)
+colnames(v) <- c("pixel", "variance")
+
+for(i in 2:785){
+  newrow <- c(i, as.numeric(var(train[,i])))
+  v <- rbind(v, newrow)
+}
+
+v
+
+varmax <- v[which.max(v$variance),]
+varmax
+varmin <- v[which.min(v$variance),]
+varmin
+##For the whole data, the max variance is in pixel 408
+##Min var is in pixel 2 ##Note, there are many pixels with var of zero
+
+##Variance of each digit. 
+##reuse the variables from the previous question
+
+digvar <- function(digit){
+  tempdf<- data.frame(ncol=2, nrow = 0)
+colnames(tempdf) <- c("pixel", "variance")
+
+for(i in 2:785){
+  newrow <- c(i, as.numeric(var(digit[,i])))
+  v <- rbind(v, newrow) }
+
+tempvarmax <- v[which.max(v$variance),]
+tempvarmin <- v[which.min(v$variance),]
+
+  return(c(tempvarmax, tempvarmin))
+}
+
+digvar(dig0)
+#408$variance[1] 12961.86
+#2$variance[1] 0
+digvar(dig1)
+#573$variance[1] 12997.2
+#2$variance[1] 0
+digvar(dig2)
+#467$variance[1] 13051.45
+#$pixel2$variance[1] 0
+digvar(dig3)
+#408 12961.86
+#2 0
+digvar(dig4)
+# 408 12961.86
+#2,0
+digvar(dig5)
+digvar(dig6)
+digvar(dig7)
+digvar(dig8)
+digvar(dig9)
+```
+   
+4) On a graph paper (you can print your own at https://print-graph-paper.com),
+   mark off 28 x 28 squares, write the digits (0-9) in these squares and "digitize"
+   them, essentially add lines corresponding to your own handwriting to this set
+   You should present a program that prints out digits in your handwriting.
+   If you are ambitious, create a program to print your signature (not a
+   statistic question, no bonus points for this)
+   
+   
+```{r}
+install.packages("raster")
+install.packages("rgdal")
+library(png)
+library(raster)
+library(sp)
+library(rgdal)
+myimg <- readPNG("/Users/morgenstern/Desktop/sample8.png")
+
+dim(myimg) 
+
+
+image(myimg[1:3024,1:3024,3], col = gray.colors(256, start = 0, end = 1))
+##assuming input image is a square
+shrink <- 3024/28
+
+
+#create square slices.
+#start by going across the first row, adding to stuff array
+
+shrinkify <- function(img){
+stuff <- c()
+for(j in 1:28){
+  ##row shifter
+  ##change y and rows in terms of j
+  ##initially rows:y is 1:28
+  cols <- 1
+  x <- shrink
+  y <- shrink * j
+  rows <- y - 27
+for (i in 1:28){
+  tempmean <- mean(myimg[rows:y,cols:x,3])
+  stuff <- c(stuff, tempmean)
+  #shift to the right, stay in row
+  #rows unchanged
+  #y unchanged
+  cols <- cols +shrink
+  x <- x + shrink
+}
+  #after reaching the right edge, reset the column coords
+  cols <- 1
+  x<- shrink
+}
+  p <- matrix(stuff, nrow=28, ncol=28, byrow=TRUE)
+  heatmap(p, Rowv = NA, Colv = NA, col = gray.colors(256, start = 0, end = 1))
+  
+}
+
+shrinkify(myimg)
+
+stuff
+
+p <- matrix(stuff, nrow=28, ncol=28, byrow=TRUE)
+
+heatmap(p, Rowv = NA, Colv = NA, col = gray.colors(256, start = 0, end = 1))
+
+```
+
+Dataset 2: a) Mnemiopsis_col_data.csv b) Mnemiopsis_count_data.csv
+This is gene expression data,  The columns represent samples, whose information is
+in the col_data file. The count_data file contains counts for each gene (rows).
+The file, info_gene.txt contains information about the organism and some links to
+look up gene functions. It will be a good experience to learn to use the genome resources,
+as this is the kind of struggles most researchers go through when they start looking at genes.
+1) What are the top 5 genes with the highest average expression
+  (across experiments)  in the set ? what is their function ?
+2) Are the top 5 genes different if they are done on a per column basis ?
+
+```{r}
+
+MCD <- read.csv("/Users/morgenstern/Desktop/BioStats/Mnemiopsis_count_data.csv")
+MCD
+
+#using rowMeans as is results in error. Need to exclude the Gene names
+MCD$avg <- rowMeans(MCD[,2:9])
+
+topgenes <- MCD[order(MCD$avg, decreasing = TRUE), 1]
+head(topgenes,5)
+#"ML20395a"  "ML26358a"  "ML46651a"  "ML020045a" "ML00017a" 
+
+
+# 2) Are the top 5 genes different if they are done on a per column basis ?
+##aboral1
+head(MCD[order(MCD$aboral1, decreasing = TRUE), 1],5)
+#"ML46651a"  "ML20395a"  "ML020045a" "ML174731a" "ML26358a" 
+
+#aboral2
+head(MCD[order(MCD$aboral2, decreasing = TRUE), 1],5)
+#"ML20395a"  "ML46651a"  "ML26358a"  "ML01482a"  "ML034334a"
+
+#aboral3
+head(MCD[order(MCD$aboral3, decreasing = TRUE), 1],5)
+#"ML20395a"  "ML01482a"  "ML26358a"  "ML46651a"  "ML034334a"
+
+#aboral4
+head(MCD[order(MCD$aboral4, decreasing = TRUE), 1],5)
+#"ML01482a"  "ML20395a"  "ML034334a" "ML46651a"  "ML034336a"
+
+#oral1
+head(MCD[order(MCD$oral1, decreasing = TRUE), 1],5)
+# "ML20395a"  "ML020045a" "ML04011a"  "ML26358a"  "ML00017a" 
+
+#oral2
+head(MCD[order(MCD$oral2, decreasing = TRUE), 1],5)
+#"ML20395a"  "ML020045a" "ML04011a"  "ML00017a"  "ML26358a" 
+
+#oral3
+head(MCD[order(MCD$oral3, decreasing = TRUE), 1],5)
+#"ML20395a"  "ML004510a" "ML26358a"  "ML00017a"  "ML04011a" 
+
+#oral4
+head(MCD[order(MCD$oral4, decreasing = TRUE), 1],5)
+#"ML20395a"  "ML004510a" "ML46651a"  "ML020045a" "ML00017a" 
+
+```
+
+
+3) Calculate mean and standard deviation of each column
+    If the mean is different, then scale the columns so that they all have
+      the same mean for the subsequent questions
+
+```{r}
+MCD
+
+meanMCD <- c(colMeans(MCD[,2:9])) 
+meanMCD
+
+sdMCD <- sapply(MCD[,2:9], sd)
+sdMCD
+
+##get all means equal to aboral1- 524.0979
+
+## newmean = oldmean x columnconstant
+## columnconstant = newmean / oldmean
+## newmean = colMeans[1,2]
+##old means -- colMeans[1,3:9]--- aboral1 column remanins unchanged
+
+scaledMCD <- MCD[,1:9]
+for (i in 2:9){
+  const <- (meanMCD[1])/(meanMCD[i-1])
+  scaledMCD[,i] <- const*scaledMCD[i]
+}
+scaledMCD
+
+#test to see if it worked
+colMeans(scaledMCD[,2:9])
+#all means are now 524.0979 
+
+```
+
+3) Use correlations between columns to find the samples that are closely
+    related. Is this concordant with the column labels ?
+
+```{r}
+
+cor(scaledMCD[,2:9], method = "spearman")
+
+
+```
+  
+4) Use correlations between rows to find the closest pairs (top 5)
+   Are these close because they vary a lot between the groups or are they close because they don't vary much ?
+```{r}
+genenames <- c(scaledMCD$Gene)
+g<- t(sapply(scaledMCD, as.numeric))
+g[-1,]
+colnames(g) <- genenames
+g
+g<- g[2:9,]
+g
+##really big don't run this!
+rowcor <- cor(g[,-1], method = "spearman")
+```
+   
+5) If you were forced to divide the genes in each column into high, medium and
+low count genes, how would you do this based on the data that you have ?
+```{r}
+
+```
+
+
+
+6) make a list of the top 5 genes with most variability and top 5 genes with
+least variability (exclude genes that have low expression values)
+
+```{r}
+lapply(scaledMCD[5,2:9], var)
+
+```
+
+
+
+7) Using the labels of columns provided, find the top variable genes between
+the two groups using a t-test list the 5 most up regulated and
+  5 most  down regulated genes. What happens if you rank by p-value of the t-test ?
+  would you exclude some of these  genes for having low expression ?
+```{r}
+
+for(i in 1:length(scaledMCD$Gene)){
+  testt <- t.test(scaledMCD[i,2:5], scaledMCD[i,6:9])
+  scaledMCD[i,10]<- testt$statistic
+  scaledMCD[i,11]<-testt$p.value
+}
+
+#5 most up regulated 
+#return greatest t value
+
+head(scaledMCD[order(scaledMCD$ttest, decreasing = TRUE), ],5   )
+
+# 5 most  down regulated genes
+#return negative tvalue
+head(scaledMCD[order(scaledMCD$ttest, decreasing = FALSE), ],5   )
+
+##small pvalue = significant difference
+
+head(scaledMCD[order(scaledMCD$pval, decreasing = FALSE), ],5   )
+
+
+```
+
