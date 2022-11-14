@@ -34,7 +34,7 @@ matrix1 <- matrix(as.numeric(train[1,785:2]),nrow=28, ncol=28)
 heatmap(matrix1,Rowv = NA, Colv = NA, col = gray.colors(256, start = 1, end = 0))
 
 
-##Set i values to whichever rows of the train data you want to graph
+##Set range values to whichever rows of the train data you want to graph
 for (i in 1:10){
   m <- matrix(as.numeric((train[i,785:2])),nrow=28, ncol=28, byrow = FALSE)
   heatmap(t(m),Rowv = NA, Colv = NA, col = gray.colors(256, start = 1, end = 0))
@@ -45,6 +45,7 @@ for (i in 1:10){
 ```
 2)  Separate the data by digits, and calculate average value of each pixel,
    a)  Plot the average values, does it still resemble the digit label ?
+   Yes.
    b) which digits fare the best under this operation ?
    2,5 and 7
 
@@ -92,15 +93,15 @@ dig9<- train[which(train$label == 9), ]
 mat9 <-matrix(as.numeric(colMeans(dig9[,2:785])),nrow=28, ncol=28)
 heatmap(mat9,Rowv = NA, Colv = NA, col = gray.colors(256, start = 1, end = 0))
 
+##Now map all of the train data- this will give insight into variance over the entire data set. 
+digall <- train
+matall <-matrix(as.numeric(colMeans(train[,2:785])),nrow=28, ncol=28)
+heatmap(matall,Rowv = NA, Colv = NA, col = gray.colors(256, start = 1, end = 0))
+
 ```
    3) Find which columns have the most variance and which have the least.
    a) Over the whole dataset and then separately, for each digit (0-9)
-   b) Can you connect the variance to the results in 2b ?
-   c) Does replacing the columns with the lowest variability by their average
-        value have an effect on the digits ?
-   d) How many columns have average values close to 255 or 0  and why ?
 
-   
 ```{r}
 
 ##Variance over whole data set
@@ -117,30 +118,34 @@ v
 
 varmax <- v[which.max(v$variance),]
 varmax
+#pixel 408, var	12961.86	
 varmin <- v[which.min(v$variance),]
 varmin
-##For the whole data, the max variance is in pixel 408
+#pixel 2, var	0	
+##For the whole data, the max variance is in pixel 408 with var of 12961.86
 ##Min var is in pixel 2 ##Note, there are many pixels with var of zero
 
 ##Variance of each digit. 
 ##reuse the variables from the previous question
 
 digvar <- function(digit){
+  #create a temporary empty dataframe
   tempdf<- data.frame(ncol=2, nrow = 0)
+  #set colnames
 colnames(tempdf) <- c("pixel", "variance")
 
 for(i in 2:785){
   newrow <- c(i, as.numeric(var(digit[,i])))
-  v <- rbind(v, newrow) }
+  tempdf <- rbind(tempdf, newrow) }
 
-tempvarmax <- v[which.max(v$variance),]
-tempvarmin <- v[which.min(v$variance),]
+tempvarmax <- tempdf[which.max(tempdf$variance),]
+tempvarmin <- tempdf[which.min(tempdf$variance),]
 
   return(c(tempvarmax, tempvarmin))
 }
 
 digvar(dig0)
-#408$variance[1] 12961.86
+#pixel 268 variance 12843.17
 #2$variance[1] 0
 digvar(dig1)
 #573$variance[1] 12997.2
@@ -149,16 +154,101 @@ digvar(dig2)
 #467$variance[1] 13051.45
 #$pixel2$variance[1] 0
 digvar(dig3)
-#408 12961.86
+#188 12539.43
 #2 0
 digvar(dig4)
-# 408 12961.86
+# 429 12629.21
 #2,0
 digvar(dig5)
+# 184 12562.46
+#2 0
 digvar(dig6)
+#240, 12495.36
+#2,0
 digvar(dig7)
+#602, 12615.84
+#2, 0
 digvar(dig8)
+#627 12270.6
+#2,0
 digvar(dig9)
+#627 12445.65
+#2,0
+```
+   b) Can you connect the variance to the results in 2b ?
+   
+   Pixels with variance of zero corresponds regions where no one writes in - The extreme corners.
+   Pixels with the highest variance are biased towards the center of the matrix - People will always try to center their numbers, but differences in handwriting and "neatness" mean that the exactness of the centering will vary with every sample.
+   
+   c) Does replacing the columns with the lowest variability by their average
+        value have an effect on the digits ?
+        
+        No effect. The lowest var 0 corresponds to columns with only 0's and a mean of 0. 
+```{r}
+## lowest var in each digit = 0
+
+digrep <- function(digit){
+  #input digit dataframe
+  tempdf <- (digit)
+  for(i in 2:785){
+    #conditional, of column var is equal to 0 replace the tempdf column with the mean
+  if (var(digit[,i])==0){
+    tempdf[,i]<- mean(digit[,i])
+    }
+  }
+  ## Now heatmap the tempdf
+  tempmat <- matrix(as.numeric(colMeans(tempdf[,2:785])),nrow=28, ncol=28)
+  heatmap(tempmat,Rowv = NA, Colv = NA, col = gray.colors(256, start = 1, end = 0))
+}
+
+digrep(dig0)
+digrep(dig1)
+digrep(dig2)
+digrep(dig3)
+digrep(dig4)
+digrep(dig5)
+digrep(dig6)
+digrep(dig7)
+digrep(dig8)
+digrep(dig9)
+digrep(train)
+```
+        
+   d) How many columns have average values close to 255 or 0  and why ?
+   
+   Many columns have a mean of close to 0 and very few columns have means close to 255. Numbers are drawn with thin lines leaving most of the matrix blank. The results would be the opposite if the data were of say pictures of solid shapes filled in. 
+
+```{r}
+
+digmean <- function(digit){
+minmean <- c()
+maxmean <- c()
+for(i in 2:785){
+  if(mean(digit[,i])<= 5){
+    minmean <- c(minmean, 1)
+  }
+  ##made the maxmean capture less sensitive to get a nonzero result
+  else if (mean(digit[,i])>= 200){
+    maxmean <- c(maxmean, 1)
+  }
+}
+  #length of the two lists represents the number of columns meeting the capture criteria
+  #the contents of the lists are unimportant
+  return(c(length(minmean), length(maxmean)))
+}
+
+digmean(train)
+digmean(dig0)
+digmean(dig1)
+digmean(dig2)
+digmean(dig3)
+digmean(dig4)
+digmean(dig5)
+digmean(dig6)
+digmean(dig7)
+digmean(dig8)
+digmean(dig9)
+
 ```
    
 4) On a graph paper (you can print your own at https://print-graph-paper.com),
@@ -170,27 +260,25 @@ digvar(dig9)
    
    
 ```{r}
-install.packages("raster")
-install.packages("rgdal")
+
 library(png)
-library(raster)
-library(sp)
-library(rgdal)
+
 myimg <- readPNG("/Users/morgenstern/Desktop/sample8.png")
 
 dim(myimg) 
 
 
 image(myimg[1:3024,1:3024,3], col = gray.colors(256, start = 0, end = 1))
-##assuming input image is a square
+##Input image must be a square
+##constant to convert image dimensions to a 28x28 grid
 shrink <- 3024/28
 
 
-#create square slices.
-#start by going across the first row, adding to stuff array
+#create square "slices".
+#start by going across the first row, adding to slice array
 
 shrinkify <- function(img){
-stuff <- c()
+slice <- c()
 for(j in 1:28){
   ##row shifter
   ##change y and rows in terms of j
@@ -201,7 +289,7 @@ for(j in 1:28){
   rows <- y - 27
 for (i in 1:28){
   tempmean <- mean(myimg[rows:y,cols:x,3])
-  stuff <- c(stuff, tempmean)
+  slice <- c(slice, tempmean)
   #shift to the right, stay in row
   #rows unchanged
   #y unchanged
@@ -212,18 +300,13 @@ for (i in 1:28){
   cols <- 1
   x<- shrink
 }
-  p <- matrix(stuff, nrow=28, ncol=28, byrow=TRUE)
+  p <- matrix(slice, nrow=28, ncol=28, byrow=TRUE)
   heatmap(p, Rowv = NA, Colv = NA, col = gray.colors(256, start = 0, end = 1))
   
 }
 
 shrinkify(myimg)
 
-stuff
-
-p <- matrix(stuff, nrow=28, ncol=28, byrow=TRUE)
-
-heatmap(p, Rowv = NA, Colv = NA, col = gray.colors(256, start = 0, end = 1))
 
 ```
 
@@ -321,10 +404,12 @@ colMeans(scaledMCD[,2:9])
 
 3) Use correlations between columns to find the samples that are closely
     related. Is this concordant with the column labels ?
+    
+    Yes, aboral-aboral and oral-oral correlations are greater than aboral-oral correlations.
 
 ```{r}
 
-cor(scaledMCD[,2:9], method = "spearman")
+cor(scaledMCD[,2:9])
 
 
 ```
@@ -336,11 +421,22 @@ genenames <- c(scaledMCD$Gene)
 g<- t(sapply(scaledMCD, as.numeric))
 g[-1,]
 colnames(g) <- genenames
-g
 g<- g[2:9,]
+##This is to flip ScaledMCD, as using transpose alone removes the column names
 g
+
+#Remove genes with low expression
+g <- g[,-(which(colMeans(g)<5))]
+
+
 ##really big don't run this!
-rowcor <- cor(g[,-1], method = "spearman")
+library(HiClimR)
+library(reshape2)
+
+rowcor <- fastCor(g, upperTri = TRUE)
+q <- subset(melt(rowcor),value>.9)
+##Top 5 genes
+head(q[order(q$value, decreasing=TRUE),],5)
 ```
    
 5) If you were forced to divide the genes in each column into high, medium and
@@ -355,7 +451,26 @@ low count genes, how would you do this based on the data that you have ?
 least variability (exclude genes that have low expression values)
 
 ```{r}
-lapply(scaledMCD[5,2:9], var)
+
+#create a dataframe with gene names
+vardf <- data.frame()
+
+
+#loop through scaledMCD and put variance results in second column
+##of vardf
+for(i in 1:length(scaledMCD$Gene)){
+  if(sum(scaledMCD[i,2:9]) >= 0.5){
+    rbind(vardf, c(scaledMCD[i,1], var(as.numeric(scaledMCD[i,2:9]))))
+} }
+
+vardf
+## highest variance
+
+head(vardf[order(vardf$V2, decreasing = TRUE), ],5)
+
+
+head(vardf[order(vardf$V2, decreasing = FALSE), ],5)
+
 
 ```
 
